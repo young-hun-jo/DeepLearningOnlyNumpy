@@ -1,3 +1,5 @@
+import numpy as np
+
 def numerical_gradient(f, x: np.array):
     """
     f: 손실함수
