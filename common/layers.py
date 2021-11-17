@@ -78,7 +78,13 @@ class SoftmaxWithLoss:
         return self.loss
     
     def backward(self, dout=1):
-        batch_size = self.x.shape[0]
-        dx = (self.y - self.t) / batch_size
+        batch_size = self.t.shape[0]
+        # 정답 레이블이 2차원의 One-hot 형태일 경우
+        if self.t.size == self.y.size:
+            dx = (self.y - self.t) / batch_size
+        else:
+            dx = self.y.copy()
+            dx[np.arange(batch_size), self.t] -= 1  # 여기서 1이 정답(1)을 의미하므로 결국 해당 레이블의 "softmax 값 - 정답(1)" 이되는 셈!
+            dx = dx / batch_size
         
         return dx
