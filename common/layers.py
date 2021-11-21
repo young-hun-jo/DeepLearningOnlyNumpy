@@ -88,3 +88,21 @@ class SoftmaxWithLoss:
             dx = dx / batch_size
         
         return dx
+
+class Dropout:
+    def __init__(self, dropout_ratio=0.5):
+        self.dropout_ratio = dropout_ratio
+        self.mask = None
+       
+    
+    def forward(self, x, train_flg=True):
+        # 학습 시
+        if train_flg:
+            self.mask = np.random.randn(*x.shape) > dropout_ratio
+            return x * self.mask
+        # 테스트 시에는 학습 때 삭제 안한 비율을 출력값에 곱해줌
+        return x * (1 - self.dropout_ratio)
+    
+    
+    def backward(self, dout):
+        return dout * self.mask
