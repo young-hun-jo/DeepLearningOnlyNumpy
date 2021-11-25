@@ -1,11 +1,12 @@
 import numpy as np
+from common.functions import *
 
 
 # Sigmoid 계층
 class Sigmoid:
     def __init__(self):
-        self.params = []  # 시그모이드 계층 자체에는 학습 파라미터 없음
-        self.out = out
+        self.params, self.grads = [], []  # 시그모이드 계층 자체에는 학습 파라미터 없음
+        self.out = None
         
     def forward(self, x):
         out = 1 / (1 + np.exp(-x))
