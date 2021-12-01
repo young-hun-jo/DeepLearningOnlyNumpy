@@ -26,13 +26,13 @@ class Matmul:
         self.x = None
         
     def forward(self, x):
-        W, = self.params
+        W, = self.params       # -> list안에 np.array가 한 개 있을 때, ,(콤마)를 붙여주면 바깥에있는 list가 언패킹되어 반환됨!
         out = np.matmul(x, W)
         self.x = x
         return out
     
     def backward(self, dout):
-        W = self.params
+        W, = self.params
         dx = np.matmul(dout, W.T)
         dW = np.matmul(self.x.T, dout)
         self.grads[0][...] = dW
