@@ -33,6 +33,11 @@ class Matmul:
     
     def backward(self, dout):
         W, = self.params
+        # skip-gram 모델일 경우, 맥락 데이터가 3차원으로 들어올 경우
+        if dout.ndim == 3:
+            dout = np.sum(dout, axis=1)
+        if self.x.ndim == 3:
+            self.x = np.sum(self.x, axis=1)
         dx = np.matmul(dout, W.T)
         dW = np.matmul(self.x.T, dout)
         self.grads[0][...] = dW
@@ -111,3 +116,30 @@ class SoftmaxWithLoss:
         dx /= batch_size
         
         return dx
+
+
+class Embedding:
+    def __init__(self, W):
+        self.params = [W]
+        self.grads = [np.zeros_like(W)]
+        self.idx = None
+        
+        
+    def forward(self, idx):
+        W, = self.params
+        self.idx = idx
+        out = W[idx]
+        return out
+    
+    
+    def backward(self, dout):
+        dW = self.grads
+        dW[...] = 0
+        
+        # 일반 for loop로 구현
+        #for i, word_id in enumerate(self.idx):
+            #dW[word_id] += dout[i]
+        
+        # dout에 지정된 self.idx(word_id)에 대응하는 dW 행렬의 인덱스 값에 각각 더해줌
+        np.add.at(dW, self.idx, dout) 
+        return None
