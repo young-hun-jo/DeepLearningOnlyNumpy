@@ -117,7 +117,33 @@ class SoftmaxWithLoss:
         
         return dx
 
+    
+# Sigmoid-with-Loss 계층
+class SigmoidWithLoss:
+    def __init__(self):
+        self.params, self.grads = [], []
+        self.loss = None
+        self.y = None   # Sigmoid 거쳐나온 후 출력값
+        self.t = None   # 정답 레이블
+        
+    
+    def forward(self, x, t):
+        self.t = t
+        self.y = 1 / (1 + np.exp(-x))
+        
+        # np.c_[a, b] : 1차원 array a, b를 칼럼으로 붙이는 역할
+        self.loss = cross_entropy_error(np.c_[1 - self.y, self.y], self.t)
+        return self.loss
+    
+    
+    def backward(self, dout=1):
+        batch_size = self.t.shape[0]
+        
+        dx = (self.y - self.t) * dout / batch_size
+        return dx
 
+
+# 계산 병목현상 개선하는 임베딩 계층
 class Embedding:
     def __init__(self, W):
         self.params = [W]
