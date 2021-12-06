@@ -2,6 +2,7 @@
 import sys
 sys.path.append('..')
 import numpy as np
+from collections import Counter
 from common.layers import Embedding, SigmoidWithLoss
 
 
@@ -42,3 +43,60 @@ class EmbeddingDot:
         self.embed.backward(dtarget_W)
         
         return dh
+    
+    
+    
+# Unigram Negatvie Sampling
+class UnigramSampler:
+    """ Unigram 기반 네거티브 샘플링 
+    
+    Args:
+        corpus: 말뭉치 내 각 단어의 고유 ID가 담긴 리스트
+        power: 단어별 확률분포 계산 시 제곱할 값
+        sample_size: 네거티브한 경우를 몇 개 샘플링할지
+    
+    """
+    def __init__(self, corpus, power, sample_size):
+        self.sample_size = sample_size
+        self.vocab_size = None
+        self.word_p = None    # 말뭉치 내 각 단어별 발생 확률분포
+        
+        # 말뭉치 내 각 단어별 출현 빈도 구하기
+        counts = Counter()
+        for word_id in corpus:
+            counts[word_id] += 1
+        
+        vocab_size = len(counts)
+        self.vocab_size = vocab_size
+        
+        # 단어별 출현 빈도 기반으로 단어별 확률 분포 계산
+        self.word_p = np.zeros(vocab_size)
+        for i in range(vocab_size):
+            self.word_[i] = counts[i]
+            
+        self.word_p = np.power(self.word_p, power)
+        self.word_p /= np.sum(word_p)
+        
+        
+    def get_negative_sample(self, target: np.array):
+        """ 긍정적인 경우인 타겟 단어를 제외한 부정적인 경우 샘플링 수행
+        
+        Args:
+            target: 특정 배치 사이즈만큼의 긍정적인 타겟 단어들이 담긴 1차원 array
+        
+        """
+        batch_size = target.shape[0]
+        
+        negative_sample = np.zeros((batch_size, self.vocab_size), dtype=np.int32)
+        
+        # 각 긍정적인 경우(타겟 단어) 마다 부정적인 경우 확률분포에서 추출
+        for i in range(batch_size):
+            prob = self.word_p.copy()
+            target_idx = target[i]
+            prob[target_idx] = 0  # 타겟 단어의 발생확률을 0으로 만들어서 샘플링 안되도록!
+            prob /= np.sum(prob)  # 확률 총합 다시 1로 만들기
+            
+            negative_sample[i, :] = np.random.choice(self.vocab_size, size=self.sample_size, 
+                                                     replace=False, p=prob)
+            
+        return negative_sample
