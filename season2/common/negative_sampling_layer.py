@@ -115,7 +115,7 @@ class NegativeSamplingLoss:
     """
     def __init__(self, W, corpus, power=0.75, sample_size=5):
         self.sample_size = sample_size
-        self.sampler = UnigramSampler(corpus, power, self.sample_size)  # 네거티브 샘플링 클래스
+        self.sampler = UnigramSampler(corpus, power, sample_size)  # 네거티브 샘플링 클래스
         # 긍정적인 경우 1개 + 부정적인 경우 sample_size개수 만큼의 계층 만들기
         self.loss_layers = [SigmoidWithLoss() for _ in range(self.sample_size+1)]
         self.embed_dot_layers = [EmbeddingDot(W) for _ in range(self.sample_size+1)]

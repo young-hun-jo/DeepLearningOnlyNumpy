@@ -159,7 +159,7 @@ class Embedding:
     
     
     def backward(self, dout):
-        dW = self.grads
+        dW, = self.grads
         dW[...] = 0
         
         # 일반 for loop로 구현

@@ -19,7 +19,7 @@ class CBOW:
         
         # 파라미터 초기화
         W_in = 0.01 * np.random.randn(V, H).astype('f')
-        W_out = 0.01 * np.random.randn(H, V).astype('f')
+        W_out = 0.01 * np.random.randn(V, H).astype('f') # 은닉층에서도 임베딩 계층으로 '행'벡터를 갖고올 것이기 때문에 (H,V)가 아닌 (V,H)로 해줘야 함!
         
         # [입력 ~ 은닉층] 계층 생성
         self.in_layers = []
