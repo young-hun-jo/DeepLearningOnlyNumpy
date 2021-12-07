@@ -176,3 +176,51 @@ def convert_one_hot(corpus: np.array, vocab_size):
                 one_hot[idx_0, idx_1, word_id] = 1
     
     return one_hot
+
+
+
+# 유추 문제를 단어 벡터의 덧셈, 뺄셈으로 잘 예측하는지 결과 보기 위한 함수 clone
+def analogy(a, b, c, word_to_id, id_to_word, word_matrix, top=5, answer=None):
+    """ 유추 문제를 단어 벡터의 덧셈, 뺄셈으로 잘 예측하는지 결과 보기 위한 함수
+    
+    Args:
+        a, b: a와 b 단어는 밀접한 관계를 맺는 단어
+        c: a와 b단어를 고려해서 c와 밀접한 관계를 맺는 단어를 반환할 것임!
+    """
+    
+    for word in (a, b, c):
+        if word not in word_to_id:
+            print('%s(을)를 찾을 수 없습니다.' % word)
+            return
+
+    print('\n[analogy] ' + a + ':' + b + ' = ' + c + ':?')
+    a_vec, b_vec, c_vec = word_matrix[word_to_id[a]], word_matrix[word_to_id[b]], word_matrix[word_to_id[c]]
+    query_vec = b_vec - a_vec + c_vec
+    query_vec = normalize(query_vec)
+
+    similarity = np.dot(word_matrix, query_vec)
+
+    if answer is not None:
+        print("==>" + answer + ":" + str(np.dot(word_matrix[word_to_id[answer]], query_vec)))
+
+    count = 0
+    for i in (-1 * similarity).argsort():
+        if np.isnan(similarity[i]):
+            continue
+        if id_to_word[i] in (a, b, c):
+            continue
+        print(' {0}: {1}'.format(id_to_word[i], similarity[i]))
+
+        count += 1
+        if count >= top:
+            return
+
+
+def normalize(x):
+    if x.ndim == 2:
+        s = np.sqrt((x * x).sum(1))
+        x /= s.reshape((s.shape[0], 1))
+    elif x.ndim == 1:
+        s = np.sqrt((x * x).sum())
+        x /= s
+    return x
