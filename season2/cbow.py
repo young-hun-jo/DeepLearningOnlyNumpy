@@ -14,7 +14,7 @@ class CBOW:
         sample_size: 네거티브 샘플링 수행 시 샘플링할 부정적인 경우 개수
     
     """
-    def __init__(self, vocab_size, hidden_size, window_size, corpus, sample_size):
+    def __init__(self, vocab_size, hidden_size, window_size, corpus):
         V, H = vocab_size, hidden_size
         
         # 파라미터 초기화
@@ -27,7 +27,7 @@ class CBOW:
             layer = Embedding(W_in)
             self.in_layers.append(layer)
         # [은닉층 ~ 손실함수] 계층 생성
-        self.ns_loss = NegativeSamplingLoss(W_out, corpus, power, sample_size)
+        self.ns_loss = NegativeSamplingLoss(W_out, corpus, power=0.75, sample_size=5)
         
         # 모든 계층의 파라미터, 기울기 담는 변수 취합
         layers = self.in_layers + [self.ns_loss]
@@ -51,7 +51,7 @@ class CBOW:
         h = 0
         for i, layer in enumerate(self.in_layers):
             h += layer.forward(contexts[:, i])
-        h += 1 / len(self.in_layers)      # 여러개의 입력층에서 왔기 때문에 은닉층 노드값 입력층 개수만큼 스케일링(평균 집계)
+        h *= 1 / len(self.in_layers)      # 여러개의 입력층에서 왔기 때문에 은닉층 노드값 입력층 개수만큼 스케일링(평균 집계)
         
         # [은닉층 ~ 손실함수] 계층 순전파 수행
         loss = self.ns_loss.forward(h, target)

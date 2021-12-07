@@ -72,10 +72,10 @@ class UnigramSampler:
         # 단어별 출현 빈도 기반으로 단어별 확률 분포 계산
         self.word_p = np.zeros(vocab_size)
         for i in range(vocab_size):
-            self.word_[i] = counts[i]
+            self.word_p[i] = counts[i]
             
         self.word_p = np.power(self.word_p, power)
-        self.word_p /= np.sum(word_p)
+        self.word_p /= np.sum(self.word_p)
         
         
     def get_negative_sample(self, target: np.array):
@@ -87,7 +87,7 @@ class UnigramSampler:
         """
         batch_size = target.shape[0]
         
-        negative_sample = np.zeros((batch_size, self.vocab_size), dtype=np.int32)
+        negative_sample = np.zeros((batch_size, self.sample_size), dtype=np.int32)
         
         # 각 긍정적인 경우(타겟 단어) 마다 부정적인 경우 확률분포에서 추출
         for i in range(batch_size):
