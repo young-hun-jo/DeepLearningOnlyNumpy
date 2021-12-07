@@ -59,7 +59,7 @@ class Trainer:
                     avg_loss = total_loss / loss_count
                     runtime = time.time() - start_time
                     print('| 에폭 %d |  반복 %d / %d | 시간 %d[s] | 손실 %.2f'
-                          % (self.current_epochs + 1, step + 1, step, runtime, avg_loss))
+                          % (self.current_epochs + 1, step + 1, step_per_epoch, runtime, avg_loss))
                     self.loss_list.append(float(avg_loss))
                     total_loss, loss_count = 0, 0
             
