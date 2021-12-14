@@ -1,3 +1,6 @@
+from common.layers import *
+
+
 # 하나의 입력 벡터를 넣는 단일 RNN 계층 클래스
 class RNN:
     """ 하나의 입력 벡터를 넣는 단일 RNN 계층 클래스
@@ -129,3 +132,161 @@ class TimeRNN:
         self.dh = dh  # 역전파 방향으로 했을 때, 마지막 은닉 상태 벡터의 기울기 값 저장 for seq2seq
         
         return dxs
+    
+    
+# 타임 임베딩 계층
+class TimeEmbedding:
+    """ 입력되는 단어를 분산 표현 벡터로 바꾸어주는 임베딩 계층
+    
+    Args:
+        W: 원본 입력 단어 즉, One-hot 형태로 되어있는 Sparse한 단어 벡터에 곱해주는 파라미터
+           즉, 이 W를 곱해줌으로써 Embedding 계층 내에 Dense한 벡터로 변환됨!
+    
+    """
+    def __init__(self, W):
+        self.params = [W]
+        self.grads = [np.zeros_like(W)]
+        self.layers = None
+        self.W = W
+        
+        
+    def forward(self, xs):
+        """ 원본 입력인 Sparse 벡터를 임베딩 벡터로 변환
+        
+        Args:
+            xs: 원본 입력 단어 즉, One-hot 형태로 되어있는 Sparse한 벡터 단어들이 T개의 시계열 길이만큼 존재!
+        
+        """
+        N, T = xs.shape
+        V, D = self.W.shape
+        
+        out = np.empty((N, T, D), dtype='f')  # D는 임베딩 벡터 차원 수, N은 배치 사이즈
+        self.layers = []
+        
+        # T길이의 모든 입력 Sparse 벡터를 모두 Dense 벡터로 변환하는 임베딩 계층 순전파 수행
+        for t in range(T):
+            layer = Embedding(self.W)
+            out[:, t, :] = layer.forward(xs[:, t])
+            self.layers.append(layer)
+        
+        return out
+    
+    
+    def backward(self, dout):
+        N, T, D = dout.shape
+        
+        grad = 0
+        for t in range(T):
+            layer = self.layers[t]
+            layer.backward(dout[:, t, :])
+            grad += layer.grads[0]
+            
+        self.grads[0][...] = grad
+        return None
+    
+    
+# RNN 계층에서 계산되어 나온 은닉 상태 벡터에 행렬 곱을 수행해 최종 출력값(Softmax)이전 Score 계산 계층
+class TimeAffine:
+    """ RNN 계층에서 나온 은닉 상태 벡터에 행렬 곱 수행 -> 단, Numpy reshape을 활용해 효율적으로 계산
+    
+    Args:
+        W: 은닉 상태 벡터에 곱해줄 파라미터
+        b: 은닉 상태 벡터에 더해줄 편향 파라미터
+    
+    """
+    def __init__(self, W, b):
+        self.params = [W, b]
+        self.grads = [np.zeros_like(W), np.zeros_like(b)]
+        self.x = None
+        
+        
+    def forward(self, x):
+        """ 순전파 수행
+        
+        Args:
+            x: 변수명은 x지만 실질적으로는 RNN 계층에서 흘러나온 은닉 상태 벡터
+        
+        """
+        N, T, D = x.shape
+        W, b = self.params
+        
+        rx = x.reshape(N*T, -1)
+        out = np.matmul(rx, W) + b
+        self.x = x
+        
+        return out.reshape(N, T, -1)
+    
+    
+    def backward(self, dout):
+        x = self.x
+        N, T, D = x.shape
+        W, b = self.params
+        
+        dout = dout.reshape(N*T, -1)
+        rx = x.reshape(N*T, -1)
+        
+        db = np.sum(dout, axis=0)
+        dW = np.matmul(rx.T, dout)
+        drx = np.matmul(dout, W.T)
+        dx = drx.reshape(N, T, -1)
+        
+        self.grads[0][...] = dW
+        self.grads[1][...] = db
+        
+        return dx
+
+    
+    
+# T길이 시계열의 모든 Softmax-with-Loss 계층 
+class TimeSoftmaxWithLoss:
+    """ T길이 시계열의 모든 Softmax-with-Loss 계층 순전파, 역전파를 수행
+    
+    """
+    def __init__(self):
+        self.params, self.grads = [], []
+        self.cache = None
+        self.ignore_label = -1
+        
+    
+    def forward(self, xs, ts):
+        """ 순전파 수행
+        
+        Args:
+            xs: TimeAffine 계층을 거쳐나온 Score 값
+            ts: 정답 레이블
+        
+        """
+        N, T, V = xs.shape # 여기서 V는 원본 입력 Sparse 벡터의 차원 수랑 동일함(즉, Vocabulary size)
+        
+        if ts.ndim == 3: # (배치사이즈, 시계열 길이, Vocabulary_size)
+            ts = ts.argmax(axis=2) # 레이블 인코딩 형태로 변환
+        
+        mask = (ts != self.ignore_label)  # mask의 역할..?
+        
+        xs = xs.reshape(N*T, V)
+        ts = ts.reshape(N*T)
+        mask = mask.reshape(N*T)
+        
+        # 소프트맥스 변환
+        ys = softmax(xs)
+        ls = np.log(ys[np.arange(N*T), ts])
+        ls *= mask
+        loss = -np.sum(ls)
+        loss /= mask.sum()
+        
+        self.cache = (ts, ys, mask, (N, T, V))
+        return loss
+    
+    
+    def backward(self, dout=1):
+        ts, ys, mask, (N, T, V) = self.cache
+        
+        dx = ys
+        dx[np.arange(N*T), ts] -= 1
+        dx *= dout
+        dx /= mask.sum()
+        dx *= mask[:, np.newaxis]
+        
+        dx = dx.reshape((N, T, V))
+        
+        return dx
