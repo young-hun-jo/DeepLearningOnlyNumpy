@@ -1,2 +1,2 @@
 # DeepLearningOnlyNumpy
-realization using only numpy based on 'Deep Learning From Bottom' reference book
+realization using only numpy based on 'Deep Learning From Scratch' reference book
