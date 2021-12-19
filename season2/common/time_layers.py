@@ -1,4 +1,5 @@
 from common.layers import *
+from common.functions import sigmoid
 
 
 # 하나의 입력 벡터를 넣는 단일 RNN 계층 클래스
