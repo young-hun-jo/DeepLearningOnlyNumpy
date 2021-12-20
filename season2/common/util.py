@@ -1,4 +1,5 @@
 import numpy as np
+import sys
 
 
 # Gradient Clipping
@@ -224,3 +225,43 @@ def normalize(x):
         s = np.sqrt((x * x).sum())
         x /= s
     return x
+
+
+def eval_perplexity(model, corpus, batch_size=10, time_size=35):
+    """ 학습시킨 모델을 넣어 Perpelxity 지표 평가
+    
+    Args:
+        model: 학습 데이터로 학습시킨 언어 모델
+        corpus: 말뭉치
+        batch_size: 데이터 배치 사이즈
+        time_size: Truncated BPTT 수행 시 잘라냈던 작은 신경망 단위 개수
+    
+    """
+    print('Evaluating perplexity metrics ...')
+    corpus_size = len(corpus)
+    total_loss, loss_cnt = 0, 0
+    steps = (corpus_size - 1) // (batch_size * time_size)
+    jump = (corpus_size - 1) // batch_size
+    
+    for step in range(steps):
+        xs = np.zeros((batch_size, time_size), dtype=np.int32)
+        ts = np.zeros((batch_size, time_size), dtype=np.int32)
+        time_offset = step * time_size
+        offsets = [time_offset + (i * jump) for i in range(batch_size)]
+        for t in range(time_size):
+            for i, offset in enumerate(offsets):
+                xs[i, t] = corpus[(offset + t) % corpus_size]
+                ts[i, t] = corpus[(offset + t + 1) % corpus_size]
+        
+        try:
+            loss = model.forward(xs, ts, train_flg=False)
+        except TypeError:
+            loss = model.forward(xs, ts)
+        total_loss += loss
+        
+        sys.stdout.write('\r%d / %d' % (step, steps))
+        sys.stdout.flush()
+        
+    print('')
+    ppl = np.exp(total_loss / steps)
+    return ppl
