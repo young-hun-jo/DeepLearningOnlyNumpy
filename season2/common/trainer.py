@@ -113,8 +113,8 @@ class RnnlmTrainer:
         
         for time in range(time_size):  # 하나의 배치에서 time_size 길이만큼 데이터 할당 loop
             for i, offset in enumerate(offsets):
-                batch_x[i, time] = x[(offset * self.time_idx) % data_size]
-                batch_t[i, time] = t[(offset * self.time_idx) % data_size]
+                batch_x[i, time] = x[(offset + self.time_idx) % data_size]
+                batch_t[i, time] = t[(offset + self.time_idx) % data_size]
             self.time_idx += 1
         return batch_x, batch_t
     
@@ -135,7 +135,6 @@ class RnnlmTrainer:
             for step in range(steps):
                 # 미니 배치 데이터 할당
                 batch_x, batch_t = self.get_batch(x, t, batch_size, time_size)
-                
                 # 순전파 및 역전파 수행 후 파라미터 갱신
                 loss = model.forward(batch_x, batch_t)
                 model.backward()
