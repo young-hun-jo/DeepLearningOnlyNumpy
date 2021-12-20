@@ -1,5 +1,5 @@
-from common.layers import *
 from common.functions import sigmoid
+from common.layers import *
 
 
 # 하나의 입력 벡터를 넣는 단일 RNN 계층 클래스
@@ -332,6 +332,7 @@ class LSTM:
         h_next = np.tanh(c_next) * o
         
         self.cache = (x, h_prev, c_prev, f, g, i, o, c_next) # 역전파 시 사용할 데이터들 캐싱해두기
+        
         return h_next, c_next
     
     
@@ -407,7 +408,7 @@ class TimeLSTM:
         """ xs라는 T 길이의 시계열 전체 입력 벡터를 순전파 수행
         
         Args:
-            xs: T 길이의 시곙려 전체 입력 벡터
+            xs: T 길이의 시계열 전체 입력 벡터
             
         """
         Wx, Wh, b = self.params
