@@ -1,6 +1,6 @@
 import numpy as np
 
-def sigomid(x: np.array):
+def sigmoid(x: np.array):
     return 1 / (1 + np.exp(-x))
 
 
