@@ -7,7 +7,7 @@ from dataset import sequence
 from common.optimizer import Adam
 from common.trainer import Trainer
 from common.util import eval_seq2seq
-from seq2seq import Seq2Seq
+from common.seq2seq_layer import Seq2Seq
 
 # 데이터 로드
 (x_train, t_train), (x_test, t_test) = sequence.load_data('addition.txt', seed=1984)
