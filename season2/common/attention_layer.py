@@ -92,3 +92,100 @@ class AttentionWeight:
         dh = np.sum(dhr, axis=1)
         
         return dhs, dh
+    
+    
+    
+# (3) 결합계층
+class Attention:
+    """ (1) 은닉상태, 가중치 간 Weighted sum 계층, (2) 가중치 계산 계층을 결합하는 클래스
+    
+    """
+    def __init__(self):
+        self.params, self.grads = [], []
+        self.attention_weight_layer = AttentionWeight()  # (2) 가중치 계산 계층
+        self.weight_sum_layer = WeightedSum()             # (1) 은닉상태, 가중치 간 Weigted sum 계층
+        self.attention_weight = None
+    
+    
+    def forward(self, hs, h):
+        """ (3) 결합 계층의 순전파
+        
+        Args:
+            hs: Encoder의 모든 은닉 상태 hs
+            h: RNN 계층에서 출력한 은닉상태(현재 shape: (batch_size, 은닉상태 차원 수)
+        
+        """
+        # (2) 가중치 계산
+        a = self.attention_weight_layer.forward(hs, h)
+        # (1) Weighted sum 계층
+        out = self.weight_sum_layer.forward(hs, a)
+        self.attention_weight = a
+        return out
+    
+    
+    def backward(self, dout):
+        """(3) 결합 계층의 역전파
+        
+        Args:
+            dout: Affine 계층으로부터 흘러들어오고 있는 국소적인 미분값
+        
+        """
+        # 순전파 시, hs가 분기(repeat)되어 (1),(2) 계층으로 흘러들어갔으므로 역전파 시 sum!
+        dhs0, da = self.weight_sum_layer.backward(dout)
+        dhs1, dh = self.attention_weight_layer.backward(da)
+        dhs = dhs0 + dhs1
+        
+        return dhs, dh
+    
+    
+    
+class TimeAttention:
+    """입력 시퀀스 길이(T) 전체를 처리하는 Time Attention 계층
+    
+    """
+    def __init__(self):
+        self.params, self.grads = [], []
+        self.layers = None
+        self.attention_weights = None
+        
+    
+    def forward(self, hs_enc, hs_dec):
+        """ Time Attention 계층의 순전파(학습 시)
+        
+        Args:
+            hs_enc: Encoder의 모든 은닉 상태 hs
+            hs_dec: 출력 시퀀스 길이 만큼의 RNN 계층에서 나오는 은닉상태 벡터 값 (batch_size, 출력시퀀스 길이, 은닉상태 차원 수)
+        
+        """
+        N, T, H = hs_dec.shape
+        out = np.empty_like(hs_dec)   # T개의 Attention 계층에서 나오는 출력값 담을 빈 껍데기 생성
+        self.layers = []
+        self.attention_weights = []
+        
+        for t in range(T):
+            layer = Attention()
+            out[:, t, :] = layer.forward(hs_enc, hs_dec[:, t, :])
+            self.layers.append(layer)
+            self.attention_weights.append(layer.attention_weight)
+        
+        return out
+    
+    
+    def backward(self, dout):
+        """ Time Attention 계층의 역전파(학습 시)
+        
+        Args:
+            dout: Affine 계층으로부터 흘러들어오는 기울기 값
+        
+        """
+        N, T, H = dout.shape
+        dhs_enc = 0                    # Encoder의 hs가 T개의 Attention 계층들로 분기되었기 때문에 이를 역전파하면 sum 하므로 이를 위한 값 초기화
+        dhs_dec = np.empty_like(dout)  # Decoder의 LSTM 계층 방향으로 역전파될 때 저장할 기울기
+        
+        for t in range(T):
+            layer = self.layers[t]
+            dhs, dh = layer.backward(dout[:, t, :])
+            dhs_enc += dhs
+            dhs_dec[:, t, :] = dh
+            
+        return dhs_enc, dhs_dec
