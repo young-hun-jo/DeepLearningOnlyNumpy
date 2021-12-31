@@ -1,5 +1,5 @@
 import numpy as np
-from common.layers import softmax
+from common.layers import Softmax
 
 
 # (1) 선택 작업 계층
@@ -52,7 +52,7 @@ class WeightedSum:
 class AttentionWeight:
     def __init__(self):
         self.params, self.grads = [], []
-        self.softmax = softmax()
+        self.softmax = Softmax()
         self.cache = None
         
         

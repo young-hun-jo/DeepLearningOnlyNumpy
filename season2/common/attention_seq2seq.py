@@ -2,8 +2,8 @@ import numpy as np
 import sys
 sys.path.append('..')
 from common.time_layers import *
-from seq2seq_layer import Encoder, Seq2Seq
-from attention_layer import TimeAttention
+from common.seq2seq_layer import Encoder, Seq2Seq
+from common.attention_layer import TimeAttention
 
 
 class AttentionEncoder(Encoder):
@@ -37,7 +37,7 @@ class AttentionDecoder:
         rn = np.random.randn
         
         embed_W = (rn(V, D) / 100).astype('f')
-        lstm_Wx = (rn(V, 4*H) / np.sqrt(V)).astype('f')
+        lstm_Wx = (rn(D, 4*H) / np.sqrt(D)).astype('f')
         lstm_Wh = (rn(H, 4*H) / np.sqrt(H)).astype('f')
         lstm_b = np.zeros(4*H).astype('f')
         affine_W = (rn(2*H, V) / np.sqrt(2*H)).astype('f')  # Affine 계층은 맥락 벡터, LSTM의 은닉 상태 2개를 연결한 입력으로 받음
@@ -45,7 +45,7 @@ class AttentionDecoder:
         
         # Embedding -> LSTM -> Attention -> Affine
         self.embed = TimeEmbedding(embed_W)
-        self.lstm = TimeLSTM(lstm_Wx, lstm_Wh, lstm_b)
+        self.lstm = TimeLSTM(lstm_Wx, lstm_Wh, lstm_b, stateful=True)
         self.attention = TimeAttention()
         self.affine = TimeAffine(affine_W, affine_b)
         layers = [self.embed, self.lstm, self.attention, self.affine]
