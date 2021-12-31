@@ -17,6 +17,22 @@ class Sigmoid:
         dx = dout * self.out * (1 - self.out)
         return dx
     
+# Softmax 계층
+class Softmax:
+    def __init__(self):
+        self.params, self.grads = [], []
+        self.out = None
+
+    def forward(self, x):
+        self.out = softmax(x)
+        return self.out
+
+    def backward(self, dout):
+        dx = self.out * dout
+        sumdx = np.sum(dx, axis=1, keepdims=True)
+        dx -= self.out * sumdx
+        return dx
+    
     
 # 행렬 곱(편향은 더하지 않음) 계층
 class Matmul:
