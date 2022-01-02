@@ -612,3 +612,58 @@ class TimeDropout:
         
     def backward(self, dout):
         return dout * self.mask
+    
+    
+class TimeBiLSTM:
+    """ 양방향 LSTM을 입력 시퀀스 길이(T)개 한번에 처리하는 클래스
+    
+    Args:
+        Wx1, Wh1, b1: 순전파(왼->오) 방향의 LSTM에 들어갈 파라미터
+        Wx2, Wh2, b2: 역전파(오->왼) 방향의 LSTM에 들어갈 파라미터
+    """
+    def __init__(self, Wx1, Wh1, b1,
+                Wx2, Wh2, b2, stateful=False):
+        self.forward_lstm = TimeLSTM(Wx1, Wh1, b1, stateful)     # 순전파 방향(왼->오)의 LSTM
+        self.backward_lstm = TimeBiLSTM(Wx2. Wh2, b2, stateful)  # 역전파 방향(오->왼)의 LSTM
+        
+        # 파라미터, 기울기 취합
+        self.params = self.forward_lstm.params + self.backward_lstm.params
+        self.grads = self.forward_lstm.grads + self.backward_lstm.grads
+        
+    
+    def forward(self, xs):
+        """ 양방향 LSTM 순전파
+        
+        Args:
+            xs: 입력 시퀀스 전체
+        
+        """
+        o1 = self.forward_lstm.forward(xs)
+        o2 = self.backward_lstm.forward(xs[:, ::-1])
+        o2 = o2[:, ::-1]  # 다시 뒤집어야 함!
+        
+        # concat 노드
+        out = np.concatenate((o1, o2), axis=2)
+        return out
+    
+    
+    def backward(self, dhs):
+        """ 양방향 LSTM 역전파
+        
+        Args;
+            dhs: Encoder가 내뱉은 모든 은닉상태 모음의 기울기
+        
+        """
+        H = dhs.shape[2] // 2  # 은닉상태 차원 수를 2로 나누기(하나는 순전파 방향의 LSTM, 하나는 역전파 방향의 LSTM)
+        do1 = dhs[:, :, :H]
+        do2 = dhs[:, :, H:]
+        
+        # 순전파 방향의 LSTM 역전파
+        dxs1 = self.forward_lstm.backward(do1)
+        # 역전파 방향의 LSTM 역전파
+        do2 = do2[:, ::-1]  # 뒤집기
+        dxs2 = self.backward_lstm.backward(do2)
+        dxs2 = dxs2[:, ::-1]
+        
+        dxs = dxs1 + dxs2
+        return dxs    
