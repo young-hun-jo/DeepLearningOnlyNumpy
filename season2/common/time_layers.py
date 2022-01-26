@@ -222,10 +222,8 @@ class TimeAffine:
         x = self.x
         N, T, D = x.shape
         W, b = self.params
-        
         dout = dout.reshape(N*T, -1)
         rx = x.reshape(N*T, -1)
-        
         db = np.sum(dout, axis=0)
         dW = np.matmul(rx.T, dout)
         drx = np.matmul(dout, W.T)
