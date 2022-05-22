@@ -127,7 +127,6 @@ class Function:
 
 class Add(Function):
     def forward(self, x0, x1):
-        x1 = as_array(x1)
         return x0 + x1
 
     def backward(self, gy):
@@ -136,7 +135,6 @@ class Add(Function):
 
 class Mul(Function):
     def forward(self, x0, x1):
-        x1 = as_array(x1)
         return x0 * x1
 
     def backward(self, gy):
@@ -154,7 +152,6 @@ class Neg(Function):
 
 class Sub(Function):
     def forward(self, x0, x1):
-        x1 = as_array(x1)
         return x0 - x1
 
     def backward(self, gy):
@@ -163,7 +160,6 @@ class Sub(Function):
 
 class Div(Function):
     def forward(self, x0, x1):
-        x1 = as_array(x1)
         return x0 / x1
 
     def backward(self, gy):
