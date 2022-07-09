@@ -35,7 +35,7 @@ class Variable:
 
         funcs = []
         seen_sets = set()
-        flag = 0
+        flag = -1e9
 
         def add_func(f):
             if f not in seen_sets:
@@ -66,7 +66,6 @@ class Variable:
                 if x.creator is not None:
                     add_func(x.creator)
                     flag += 1
-            flag = 0
 
             # 중간 출력값들의 기울기 삭제
             if not retain_grad:
