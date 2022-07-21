@@ -2,6 +2,7 @@ import numpy as np
 import heapq
 import weakref
 import contextlib
+import dezero
 
 
 class Config:
@@ -21,6 +22,15 @@ class Variable:
         self.grad = None
         self.creator = None
         self.generation = 0
+
+    def __len__(self):
+        return len(self.data)
+
+    def __repr__(self):
+        if self.data is None:
+            return 'variable(None)'
+        p = str(self.data).replace('\n', '\n' + ' ' * 9)
+        return 'variable(' + p + ')'
 
     def set_creator(self, func):
         self.creator = func
@@ -74,14 +84,10 @@ class Variable:
                     for y in f.outputs:
                         y().grad = None
 
-    def __len__(self):
-        return len(self.data)
-
-    def __repr__(self):
-        if self.data is None:
-            return 'variable(None)'
-        p = str(self.data).replace('\n', '\n' + ' ' * 9)
-        return 'variable(' + p + ')'
+    def reshape(self, *shape):
+        if len(shape) == 1 and isinstance(shape[0], (tuple, list)):
+            shape = shape[0]
+        return dezero.function.reshape(self, shape)
 
     @property
     def shape(self):
