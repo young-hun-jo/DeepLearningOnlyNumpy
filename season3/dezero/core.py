@@ -83,10 +83,9 @@ class Variable:
                 if not retain_grad:
                     for y in f.outputs:
                         y().grad = None
-
-    def reshape(self, *shape):
-        if len(shape) == 1 and isinstance(shape[0], (tuple, list)):
-            shape = shape[0]
+    def reshape(self, shape):
+        if len(shape) == 1 and isinstance(shape[1], (tuple, list)):
+            shape = shape[1]
         return dezero.functions.reshape(self, shape)
 
     def transpose(self, *axes):
@@ -171,8 +170,8 @@ class Mul(Function):
 
     def backward(self, gy):
         x0, x1 = self.inputs
-        gx0 = gy * x1
-        gx1 = gy * x0
+        gx0 = x1 * gy
+        gx1 = x0 * gy
         if self.x0_shape != self.x1_shape:
             gx0 = dezero.functions.sum_to(gx0, self.x0_shape)
             gx1 = dezero.functions.sum_to(gx1, self.x1_shape)
