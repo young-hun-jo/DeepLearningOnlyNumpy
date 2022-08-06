@@ -66,6 +66,7 @@ class Transpose(Function):
         inv_axes = tuple(np.argsort([ax % axes_len for ax in self.axes]))
         return transpose(gy, inv_axes)
 
+
 class BroadcastTo(Function):
     def __init__(self, shape):
         self.shape = shape
@@ -76,7 +77,7 @@ class BroadcastTo(Function):
         return y
 
     def backward(self, gy):
-        gx = utils.sum_to(gy, self.x_shape)
+        gx = sum_to(gy, self.x_shape)
         return gx
 
 
