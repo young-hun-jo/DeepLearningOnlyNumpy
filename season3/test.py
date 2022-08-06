@@ -4,51 +4,50 @@
 #     sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 
 import numpy as np
-from dezero import Variable
+from dezero import layers as L
 from dezero import functions as F
 
-# make dataset
+
+# dataset
 np.random.seed(42)
 x = np.random.rand(100, 1)
-y = np.sin(2 * np.pi * x) + np.random.rand(100, 1)  # noise는 broadcasting 됨
-print(y.shape)
+y = np.sin(2 * np.pi * x) + np.random.rand(100, 1)   # label
 
-# init weight
-I, H, O = 1, 50, 1
-std = 0.01
-W1 = Variable(np.random.randn(I, H) * std)
-b1 = Variable(np.zeros(H))
-W2 = Variable(np.random.randn(H, O) * std)
-b2 = Variable(np.zeros(O))
+layer1 = L.Linear(out_size=10)
+layer2 = L.Linear(out_size=1)
 
-# predictor
+
 def predict(x):
-    y = F.linear(x, W1, b1)
-    y = F.sigmoid(y)
-    y = F.linear(y, W2, b2)
-    return y
+    y = layer1(x)
+    z = F.sigmoid(y)
+    k = layer2(z)
+    return k
+
 
 lr = 0.2
-iters = 1000
+iters = 10000
 
 for i in range(iters):
+    # predict
     y_pred = predict(x)
+    # loss
     loss = F.mean_squared_error(y, y_pred)
 
-    # clear gradient in parameters
-    W1.clear_grad()
-    b1.clear_grad()
-    W2.clear_grad()
-    b2.clear_grad()
+    # init gradients in parameters in middle layers for avoiding accumulated gradients(wrong gradients)
+    layer1.clear_grads()
+    layer2.clear_grads()
 
-    # backpropagation
-    loss.backward(use_heap=True, retain_grad=False)
+    # backward based on Loss function
+    loss.backward(use_heap=True)
 
-    # update parameters using GD
-    W1.data -= lr * W1.grad.data
-    b1.data -= lr * b1.grad.data
-    W2.data -= lr * W2.grad.data
-    b2.data -= lr * b2.grad.data
-    if (i+1) % 100 == 0:
-        print(f"{i+1}th Epoch -> Loss:", loss)
+    # update parameters
+    for layer in [layer1, layer2]:
+        for param in layer.params():
+            param.data -= lr * param.grad.data
+
+    if (i+1) % 1000 == 0:
+        print(f'Epoch:{i+1} -> Loss:', loss)
+
+
+
 
