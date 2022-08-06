@@ -11,5 +11,7 @@ else:
     from dezero.core import using_config, no_grad
     from dezero.core import as_array, as_variable
     from dezero.core import setup_variable
+    from dezero.core import Parameter
+    from dezero.layers import Layer
 
 setup_variable()

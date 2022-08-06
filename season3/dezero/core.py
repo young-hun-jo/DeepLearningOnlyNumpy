@@ -121,6 +121,10 @@ class Variable:
         return self.data.dtype
 
 
+class Parameter(Variable):
+    pass
+
+
 class Function:
     def __call__(self, *inputs):
         inputs = [as_variable(x) for x in inputs]     # nd-array만 들어올 경우, Variable 클래스로 변환
