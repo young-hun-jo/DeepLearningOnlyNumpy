@@ -11,6 +11,7 @@ class Layer:
     def __setattr__(self, name, value):
         if isinstance(value, (Parameter, Layer)):
             self._params.add(name)
+        # avoid infinite callable
         super().__setattr__(name, value)
 
     def __call__(self, *inputs):
@@ -51,7 +52,7 @@ class Linear(Layer):
         if nobias:
             self.b = None
         else:
-            self.b = Parameter(np.zeros(self.out_size).astype(self.dtype), name='b')
+            self.b = Parameter(np.zeros(self.out_size, dtype=self.dtype), name='b')
 
     def _init_W(self):
         I, O = self.in_size, self.out_size
