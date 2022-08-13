@@ -4,8 +4,9 @@
 #     sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 
 import numpy as np
-from dezero import layers as L
+import dezero.layers as L
 from dezero import functions as F
+from dezero import Layer
 
 
 # dataset
@@ -13,40 +14,43 @@ np.random.seed(42)
 x = np.random.rand(100, 1)
 y = np.sin(2 * np.pi * x) + np.random.rand(100, 1)   # label
 
-layer1 = L.Linear(out_size=10)
-layer2 = L.Linear(out_size=1)
+# build model
+model = Layer()
+model.l1 = L.Linear(10)
+model.l2 = L.Linear(1)
 
 
 def predict(x):
-    y = layer1(x)
-    z = F.sigmoid(y)
-    k = layer2(z)
-    return k
+    y = model.l1(x)
+    y = F.sigmoid(y)
+    y = model.l2(y)
+    return y
 
 
 lr = 0.2
 iters = 10000
 
 for i in range(iters):
-    # predict
+    # predict and get loss
     y_pred = predict(x)
-    # loss
     loss = F.mean_squared_error(y, y_pred)
 
-    # init gradients in parameters in middle layers for avoiding accumulated gradients(wrong gradients)
-    layer1.clear_grads()
-    layer2.clear_grads()
+    # clear grads
+    model.clear_grads()
 
-    # backward based on Loss function
+    # backward
     loss.backward(use_heap=True)
 
     # update parameters
-    for layer in [layer1, layer2]:
-        for param in layer.params():
-            param.data -= lr * param.grad.data
+    for param in model.params():
+        param.data -= lr * param.grad.data
 
-    if (i+1) % 1000 == 0:
-        print(f'Epoch:{i+1} -> Loss:', loss)
+    if i == 0 or (i+1) % 1000 == 0:
+        print(f"# Epoch:{i+1} -> Loss: {loss}")
+
+
+
+
 
 
 
