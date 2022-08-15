@@ -236,7 +236,7 @@ class Softmax(Function):
 
     def forward(self, x):
         y = x - x.max(axis=self.axis, keepdims=True)
-        y = np.exp(x)
+        y = np.exp(y)
         y /= y.sum(axis=self.axis, keepdims=True)
         return y
 
