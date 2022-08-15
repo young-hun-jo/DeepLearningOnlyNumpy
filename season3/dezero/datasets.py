@@ -2,18 +2,25 @@ import numpy as np
 
 
 class Dataset:
-    def __init__(self, train=True):
+    def __init__(self, train=True, transform=None, target_transform=None):
         self.train = train
+        self.transform = transform
+        self.target_transform = target_transform
+        if self.transform is None:
+            self.transform = lambda x: x  # identity function
+        if self.target_transform is None:
+            self.target_transform = lambda x: x
         self.data = None
         self.label = None
         self.prepare()  # 자식 클래스에서 구현
 
     def __getitem__(self, index):
-        assert np.isscalar(index)  # 현재 슬라이싱까지는 적용 X
+        # case when index is both integer and slicing
         if self.label is None:
-            return self.data[index], None
+            return self.transform(self.data[index]), None
         else:
-            return self.data[index], self.label[index]
+            return self.transform(self.data[index]), \
+                   self.target_transform(self.label[index])
 
     def __len__(self):
         return len(self.data)
