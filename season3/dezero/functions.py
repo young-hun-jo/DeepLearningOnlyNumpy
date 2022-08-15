@@ -264,7 +264,7 @@ class SoftmaxCrossEntropy(Function):
 
         gy *= 1 / N
         y = softmax(x)
-        t_one_hot = np.eye(CLASS_N, dtyp=t.dtype)[t.data]  # 레이블 값을 인덱스로하는 원소값이 1인 행 벡터들만 슬라이싱
+        t_one_hot = np.eye(CLASS_N, dtype=t.dtype)[t.data]  # 레이블 값을 인덱스로하는 원소값이 1인 행 벡터들만 슬라이싱
         y = (y - t_one_hot) * gy
         return y
 
