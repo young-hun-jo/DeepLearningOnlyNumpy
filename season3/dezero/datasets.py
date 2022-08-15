@@ -30,6 +30,9 @@ class Dataset:
 
 
 class Spiral(Dataset):
+    def __init__(self, **kwargs):
+        super(Spiral, self).__init__(**kwargs)  # Python 2.x ver grammar
+
     def prepare(self):
         self.data, self.label = get_spiral(train=self.train)
 
