@@ -136,3 +136,9 @@ def logsumexp(x, axis=1):
     np.log(s, out=s)
     m += s
     return m
+
+
+def convert_dtype(*args):
+    if len(args) == 1:
+        return np.array(args[0], dtype=np.float64)
+    return np.array(args[0], dtype=np.float64), np.array(args[1], dtype=np.float64)
