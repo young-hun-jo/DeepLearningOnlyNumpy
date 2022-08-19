@@ -67,7 +67,7 @@ class AdaGrad(Optimizer):
     def update_one(self, param):
         h_key = id(param)
         if h_key not in self.hs:
-            self.hs[h_key] = np.zeros_like(param)
+            self.hs[h_key] = np.zeros_like(param.data)
 
         lr = self.lr
         eps = self.eps
@@ -75,7 +75,6 @@ class AdaGrad(Optimizer):
         h = self.hs[h_key]
 
         h += grad * grad
-        h = utils.convert_dtype(h)
         param.data -= lr * grad / (np.sqrt(h) + eps)
 
 
@@ -90,11 +89,10 @@ class AdaDelta(Optimizer):
     def update_one(self, param):
         key = id(param)
         if key not in self.msg:
-            self.msg[key] = np.zeros_like(param)
-            self.msdx[key] = np.zeros_like(param)
+            self.msg[key] = np.zeros_like(param.data)
+            self.msdx[key] = np.zeros_like(param.data)
 
         msg, msdx = self.msg[key], self.msdx[key]
-        msg, msdx = utils.convert_dtype(msg, msdx)
         rho = self.rho
         eps = self.eps
         grad = param.grad.data
@@ -132,8 +130,8 @@ class Adam(Optimizer):
 
         key = id(param)
         if key not in self.ms:
-            self.ms[key] = np.zeros_like(param)
-            self.vs[key] = np.zeros_like(param)
+            self.ms[key] = np.zeros_like(param.data)
+            self.vs[key] = np.zeros_like(param.data)
 
         m, v = self.ms[key], self.vs[key]
         beta1, beta2, eps = self.beta1, self.beta2, self.eps
