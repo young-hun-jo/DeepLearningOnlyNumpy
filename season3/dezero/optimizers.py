@@ -120,7 +120,7 @@ class Adam(Optimizer):
 
     def update(self, *args, **kwargs):
         self.t += 1
-        super().update(*args, **kwargs)
+        super().update(*args, **kwargs)  # avoid infinite callable
 
     @property
     def lr(self):
@@ -132,8 +132,8 @@ class Adam(Optimizer):
 
         key = id(param)
         if key not in self.ms:
-            self.ms[key] = np.zeros_like(param.data)
-            self.vs[key] = np.zeros_like(param.data)
+            self.ms[key] = np.zeros_like(param)
+            self.vs[key] = np.zeros_like(param)
 
         m, v = self.ms[key], self.vs[key]
         beta1, beta2, eps = self.beta1, self.beta2, self.eps
@@ -141,4 +141,4 @@ class Adam(Optimizer):
 
         m += (1 - beta1) * (grad - m)
         v += (1 - beta2) * (grad * grad - v)
-        param.data -= self.lr * m / (np.sqrt(v) + eps)
+        param.data -= (self.lr * m / (np.sqrt(v) + eps))
