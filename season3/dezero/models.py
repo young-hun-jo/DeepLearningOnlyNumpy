@@ -18,10 +18,12 @@ class MLP(Model):
 
         for i, output_size in enumerate(fc_output_sizes):
             layer = L.Linear(output_size)
-            setattr(self, 'l' + str(i), layer)
+            setattr(self, 'layer' + str(i), layer)
             self.layers.append(layer)
 
     def forward(self, x):
-        for l in self.layers[:-1]:
-            x = self.activation(l(x))
-        return self.layers[-1](x)
+        for layer in self.layers[:-1]:
+            x = layer(x)
+        y = self.layers[-1](x)
+        return y
+

@@ -4,49 +4,37 @@
 #     sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 
 import numpy as np
-import dezero.layers as L
+from dezero.models import MLP
 from dezero import functions as F
-from dezero import Layer
+from dezero.optimizers import SGD  # SGD를 import
 
 
 # dataset
 np.random.seed(42)
 x = np.random.rand(100, 1)
-y = np.sin(2 * np.pi * x) + np.random.rand(100, 1)   # label
+y = np.sin(2 * np.pi * x) + np.random.rand(100, 1)
 
-# build model
-model = Layer()
-model.l1 = L.Linear(10)
-model.l2 = L.Linear(1)
-
-
-def predict(x):
-    y = model.l1(x)
-    y = F.sigmoid(y)
-    y = model.l2(y)
-    return y
-
-
-lr = 0.2
+# build and compile model
+model = MLP((25, 40, 3, 1))
+lr = 0.01
 iters = 10000
+optimizer = SGD(lr).setup(model)  # 달라진 부분!
 
 for i in range(iters):
-    # predict and get loss
-    y_pred = predict(x)
+    y_pred = model(x)
     loss = F.mean_squared_error(y, y_pred)
 
-    # clear grads
     model.clear_grads()
+    loss.backward()
 
-    # backward
-    loss.backward(use_heap=True)
+    # 달라진 부분!
+    optimizer.update()
 
-    # update parameters
-    for param in model.params():
-        param.data -= lr * param.grad.data
+    if (0 <= i <= 30) or (i % 1000) == 0:
+        print(f"Epoch:{i+1} -> Loss:{loss.data}")
 
-    if i == 0 or (i+1) % 1000 == 0:
-        print(f"# Epoch:{i+1} -> Loss: {loss}")
+
+
 
 
 

@@ -12,16 +12,15 @@ class Optimizer:
 
     def update(self):
         params = [p for p in self.target.params() if p.grad is not None]
-
-        # (optional) preprocessing gradients ex) gradient clipping, weight decay, ...
+        # preprocess parametrs
         for f in self.hooks:
-            f(params)
+            f(p)
 
-        # update parameters
+        # update parametrs
         for param in params:
             self.update_one(param)
 
-    def update_one(self, param):
+    def update_one(self):
         raise NotImplementedError("This method should be run outside of Optimizer class.")
 
     def add_hook(self, f):
@@ -29,27 +28,27 @@ class Optimizer:
 
 
 class SGD(Optimizer):
-    def __init__(self, lr=0.01):
+    def __init__(self, learning_rate=0.01):
         super().__init__()
-        self.lr = lr
+        self.lr = learning_rate
 
     def update_one(self, param):
         param.data -= self.lr * param.grad.data
 
 
 class MomentumSGD(Optimizer):
-    def __init__(self, lr=0.01, momentum=0.9):
+    def __init__(self, learning_rate=0.01, momentum=0.9):
         super().__init__()
-        self.lr = lr
+        self.lr = learning_rate
         self.momentum = momentum
         self.vs = {}
 
     def update_one(self, param):
         v_key = id(param)
         if v_key not in self.vs:
-            self.vs[v_key] = np.zeros_like(param.data)
+            self.vs[v_key] = np.zeros_like(param)
 
-        v = self.vs[v_key]
-        v *= self.momentum
+        v = self.momentum * self.vs[v_key]
         v -= self.lr * param.grad.data
         param.data += v
+

@@ -11,7 +11,6 @@ class Layer:
     def __setattr__(self, name, value):
         if isinstance(value, (Parameter, Layer)):
             self._params.add(name)
-        # avoid infinite callable
         super().__setattr__(name, value)
 
     def __call__(self, *inputs):
@@ -65,6 +64,5 @@ class Linear(Layer):
             self._init_W()
         y = F.linear(x, self.W, self.b)
         return y
-
 
 
