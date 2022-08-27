@@ -6,7 +6,8 @@
 import numpy as np
 import dezero.layers as L
 from dezero import functions as F
-from dezero import Layer
+from dezero.models import MLP
+from dezero.optimizers import SGD, MomentumSGD, AdaDelta, AdaGrad, Adam
 
 
 # dataset
@@ -15,38 +16,26 @@ x = np.random.rand(100, 1)
 y = np.sin(2 * np.pi * x) + np.random.rand(100, 1)   # label
 
 # build model
-model = Layer()
-model.l1 = L.Linear(10)
-model.l2 = L.Linear(1)
+model = MLP((45, 30, 25, 1))
+optimizer = Adam().setup(model)
 
-
-def predict(x):
-    y = model.l1(x)
-    y = F.sigmoid(y)
-    y = model.l2(y)
-    return y
-
-
-lr = 0.2
-iters = 10000
+iters = 5000
 
 for i in range(iters):
-    # predict and get loss
-    y_pred = predict(x)
+    # predict and loss
+    y_pred = model(x)
     loss = F.mean_squared_error(y, y_pred)
 
-    # clear grads
+    # clear gradients and backpropagation
     model.clear_grads()
-
-    # backward
     loss.backward(use_heap=True)
 
     # update parameters
-    for param in model.params():
-        param.data -= lr * param.grad.data
+    optimizer.update()
 
-    if i == 0 or (i+1) % 1000 == 0:
-        print(f"# Epoch:{i+1} -> Loss: {loss}")
+    # verbose
+    if (0 <= i <= 30) or (i % 500) == 0:
+        print(f"Epoch:{i+1} => Loss:{loss.data}")
 
 
 
