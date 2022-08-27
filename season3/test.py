@@ -3,39 +3,74 @@
 #     import os, sys
 #     sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 
-import numpy as np
-import dezero.layers as L
-from dezero import functions as F
+import sys
+import logging
+import dezero
+import dezero.functions as F
+from dezero import DataLoader
 from dezero.models import MLP
-from dezero.optimizers import SGD, MomentumSGD, AdaDelta, AdaGrad, Adam
+from dezero.optimizers import AdaGrad
+from dezero.datasets import Spiral
 
+logger = logging.getLogger()
+logger.setLevel(logging.INFO)
+logging.basicConfig(stream=sys.stdout,
+                    format='[%(asctime)s] %(levelname)s : %(message)s')
+
+# hyper-parameter
+max_epoch = 300
+batch_size = 30
+hidden_size = (10, 5)
+lr = 1.0
 
 # dataset
-np.random.seed(42)
-x = np.random.rand(100, 1)
-y = np.sin(2 * np.pi * x) + np.random.rand(100, 1)   # label
+train_set = Spiral(train=True)
+test_set = Spiral(train=False)
 
-# build model
-model = MLP((45, 30, 25, 1))
-optimizer = Adam().setup(model)
+# dataloader
+train_loader = DataLoader(train_set, batch_size, shuffle=True)
+test_loader = DataLoader(test_set, batch_size, shuffle=False)
 
-iters = 5000
+# build and compile model
+model = MLP((*hidden_size, 3))
+optimizer = AdaGrad(lr=lr).setup(model)
 
-for i in range(iters):
-    # predict and loss
-    y_pred = model(x)
-    loss = F.mean_squared_error(y, y_pred)
+# train and test(validation) in each Epoch
+for epoch in range(max_epoch):
+    sum_loss, sum_acc = 0, 0
 
-    # clear gradients and backpropagation
-    model.clear_grads()
-    loss.backward(use_heap=True)
+    # mini-batch for train
+    for x, t in train_loader:
+        # predict and get loss, accuracy
+        y_pred = model(x)
+        loss = F.softmax_cross_entropy(y_pred, t)
+        acc = F.accuracy(y_pred, t)
 
-    # update parameters
-    optimizer.update()
+        # clear gradients
+        model.clear_grads()
+        # backward
+        loss.backward(use_heap=True)
+        # update params
+        optimizer.update()
 
-    # verbose
-    if (0 <= i <= 30) or (i % 500) == 0:
-        print(f"Epoch:{i+1} => Loss:{loss.data}")
+        # verbose metric
+        sum_loss += float(loss.data) * len(t)
+        sum_acc += float(acc.data) * len(t)
+    if (epoch+1) % 20 == 0:
+        logging.info(f"(Epoch{epoch+1})Train Loss: {sum_loss / len(train_set)}, Accuracy: {sum_acc / len(train_set)}")
+
+    # mini-batch for test
+    sum_loss, sum_acc = 0, 0
+    with dezero.no_grad():   # deactivate backward
+        for x, t in test_loader:
+            y_pred = model(x)
+            loss = F.softmax_cross_entropy(y_pred, t)
+            acc = F.accuracy(y_pred, t)
+            sum_loss += float(loss.data) * len(t)
+            sum_acc += float(acc.data) * len(t)
+    if (epoch+1) % 20 == 0:
+        logging.info(f"(Epoch{epoch+1})Test Loss: {sum_loss / len(test_set)}, Accuracy: {sum_acc / len(test_set)}")
+        print()
 
 
 
