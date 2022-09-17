@@ -1,8 +1,10 @@
 import numpy as np
+import dezero
 from dezero.core import Function
 from dezero.core import as_variable
 from dezero.core import as_array
 from dezero import utils
+
 
 
 class Sin(Function):
@@ -396,3 +398,15 @@ def accuracy(y, t):
     result = (pred == t.data)
     acc = result.mean()
     return as_variable(as_array(acc))
+
+
+def dropout(x, dropout_ratio=0.5):
+    x = as_variable(x)
+
+    if dezero.Config.train:
+        scale = 1 - dropout_ratio
+        mask = np.random.rand(*x.shape) > dropout_ratio
+        y = x * mask / scale
+        return y
+    else:
+        return x

@@ -1,3 +1,4 @@
+import os
 import weakref
 import numpy as np
 from dezero import Parameter
@@ -36,6 +37,36 @@ class Layer:
     def clear_grads(self):
         for param in self.params():
             param.clear_grad()
+
+    def _flatten_params(self, param_dict, parent_key=''):
+        for name in self._params:
+            obj = self.__dict__[name]
+            key = parent_key + '/' + name if parent_key else name
+
+            if isinstance(obj, Layer):
+                obj._flatten_params(param_dict, parent_key=key)
+            else:
+                param_dict[key] = obj
+
+    def save_weights(self, path):
+        param_dict = {}
+        self._flatten_params(param_dict)
+        array_dict = {key: param.data for key, param in param_dict.items() if param is not None}
+
+        try:
+            np.savez_compressed(path, **array_dict)
+        except (Exception, KeyboardInterrupt) as e:
+            if os.path.exists(path):
+                os.remove(path)
+            raise
+
+    def load_weights(self, path):
+        npz = np.load(path)
+        param_dict = {}
+        self._flatten_params(param_dict)
+
+        for key, param in param_dict.items():
+            param.data = npz[key]
 
 
 class Linear(Layer):
