@@ -131,7 +131,7 @@ def reshape_sum_backward(gy, x_shape, axis, keepdims):
 def logsumexp(x, axis=1):
     m = x.max(axis=axis, keepdims=True)
     y = x - m
-    np.exp(y, out=y)    # 'out' argument for inplace
+    np.exp(y, out=y)  # 'out' argument for inplace
     s = y.sum(axis=axis, keepdims=True)
     np.log(s, out=s)
     m += s
@@ -142,3 +142,8 @@ def convert_dtype(*args):
     if len(args) == 1:
         return np.array(args[0], dtype=np.float64)
     return np.array(args[0], dtype=np.float64), np.array(args[1], dtype=np.float64)
+
+
+def get_conv_outsize(input_size, kernel_size, pad_size, stride_size):
+    output_size = (input_size + 2 * pad_size - kernel_size) // stride_size + 1
+    return output_size
