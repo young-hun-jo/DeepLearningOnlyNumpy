@@ -413,5 +413,40 @@ def dropout(x, dropout_ratio=0.5):
         return x
 
 
+class Max(Function):
+    def __init__(self, axis=None, keepdims=True):
+        self.axis = axis
+        self.keepdims = keepdims
+
+    def forward(self, x):
+        y = x.max(axis=self.axis, keepdims=self.keepdims)
+        return y
+
+    def backward(self, gy):
+        x = self.inputs[0]
+        y = self.outputs[0]()
+
+        shape = utils.max_backward_shape(x, self.axis)
+        gy = reshape(gy, shape)
+        y = reshape(y, shape)
+        cond = (x.data == y.data)
+        gy = broadcast_to(gy, cond.shape)
+        return gy * cond
+
+
+class Min(Max):
+    def forward(self, x):
+        y = x.min(axis=self.axis, keepdims=self.keepdims)
+        return y
+
+
+def max(x, axis=None, keepdims=False):
+    return Max(axis, keepdims)(x)
+
+
+def min(x, axis=None, keepdims=False):
+    return Min(axis, keepdims)(x)
+
+
 from dezero.functions_conv import im2col
 from dezero.functions_conv import conv2d_simple
