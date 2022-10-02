@@ -147,3 +147,13 @@ def convert_dtype(*args):
 def get_conv_outsize(input_size, kernel_size, pad_size, stride_size):
     output_size = (input_size + 2 * pad_size - kernel_size) // stride_size + 1
     return output_size
+
+
+def pair(x):
+    if isinstance(x, int):
+        return x, x
+    elif isinstance(x, tuple):
+        assert len(x) == 2
+        return x
+    else:
+        raise ValueError

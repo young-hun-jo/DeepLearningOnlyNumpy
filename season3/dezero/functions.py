@@ -149,7 +149,8 @@ class Linear(Function):
 
     def backward(self, gy):
         x, W, b = self.inputs
-        gb = None if b is None else sum_to(gy, b.shape)
+
+        gb = None if b.data is None else sum_to(gy, b.shape)
         gx = matmul(gy, W.T)
         gW = matmul(x.T, gy)
         return gx, gW, gb
@@ -410,3 +411,7 @@ def dropout(x, dropout_ratio=0.5):
         return y
     else:
         return x
+
+
+from dezero.functions_conv import im2col
+from dezero.functions_conv import conv2d_simple
