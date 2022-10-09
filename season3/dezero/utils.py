@@ -1,5 +1,7 @@
 import os
 import subprocess
+import urllib.request
+
 import numpy as np
 
 
@@ -169,3 +171,38 @@ def pair(x):
         return x
     else:
         raise ValueError
+
+
+def get_file(url, file_name=None):
+    cache_dir = '/Users/younghun/Desktop/gitrepo/DeepLearningOnlyNumpy/season3/dezero/weights'
+    if file_name is None:
+        file_name = url[url.rfind('/')+1:]
+    file_path = os.path.join(cache_dir, file_name)
+
+    if not os.path.exists(cache_dir):
+        os.mkdir(cache_dir)
+
+    if os.path.exists(file_path):
+        return file_path
+
+    print("Downloading weights..." + file_name)
+    try:
+        urllib.request.urlretrieve(url, file_path, show_progress)
+    except (Exception, KeyboardInterrupt) as e:
+        if os.path.exists(file_path):
+            os.remove(file_path)
+        raise
+    print("Done")
+    return file_path
+
+
+def show_progress(block_num, block_size, total_size):
+    bar_template = "\r[{}] {:.2f}%"
+
+    downloaded = block_num * block_size
+    p = downloaded / total_size * 100
+    i = int(downloaded / total_size * 30)
+    if p >= 100.0: p = 100.0
+    if i >= 30: i = 30
+    bar = "#" * i + "." * (30 - i)
+    print(bar_template.format(bar, p), end='')

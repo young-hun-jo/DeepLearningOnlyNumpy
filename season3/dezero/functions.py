@@ -178,6 +178,18 @@ class Exp(Function):
         return gx
 
 
+class Relu(Function):
+    def forward(self, x):
+        y = np.maximum(x, 0.0)
+        return y
+
+    def backward(self, gy):
+        x, = self.inputs
+        mask = x.data > 0
+        gx = gy * mask
+        return gx
+
+
 class GetItem(Function):
     def __init__(self, slices):
         self.slices = slices
@@ -348,6 +360,10 @@ def exp(x):
     return Exp()(x)
 
 
+def relu(x):
+    return Relu()(x)
+
+
 def get_item(x, slices):
     return GetItem(slices)(x)
 
@@ -450,3 +466,6 @@ def min(x, axis=None, keepdims=False):
 
 from dezero.functions_conv import im2col
 from dezero.functions_conv import conv2d_simple
+from dezero.functions_conv import conv2d
+from dezero.functions_conv import pooling_simple
+from dezero.functions_conv import pooling

@@ -131,6 +131,6 @@ class Conv2d(Layer):
             self.in_channels = x.shape[1]  # `x` shape must be (N, C, H, W)
             self._init_W()
 
-        y = F.conv2d_simple(x, self.W, self.b, self.stride, self.pad)
+        y = F.conv2d(x, self.W, self.b, self.stride, self.pad)
         return y
 

@@ -311,3 +311,5 @@ def setup_variable():
     Variable.__rtruediv__ = rdiv
     Variable.__pow__ = pow
     Variable.__getitem__ = dezero.functions.get_item   # avoid 순환 참조
+    Variable.max = dezero.functions.max
+    Variable.min = dezero.functions.min
