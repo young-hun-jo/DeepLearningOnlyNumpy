@@ -24,7 +24,7 @@ class DataLoader:
 
     def __next__(self):
         if self.iteration >= self.max_iter:
-            self.iteration = 0
+            self.reset()
             raise StopIteration("One epoch is finished. Iteration count is initialized.")
 
         i, batch_size = self.iteration, self.batch_size
