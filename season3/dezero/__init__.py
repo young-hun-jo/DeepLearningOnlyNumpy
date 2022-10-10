@@ -16,5 +16,7 @@ else:
     from dezero.dataloaders import DataLoader
     from dezero.core import Config
     from dezero.core import test_mode
+    from dezero.models import Model
+    from dezero import datasets
 
 setup_variable()
