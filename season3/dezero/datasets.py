@@ -101,3 +101,9 @@ class SinCurve(Dataset):
         y = y.astype(dtype)
         self.data = y[:-1][:, np.newaxis]
         self.label = y[1:][:, np.newaxis]
+
+
+class DummyData(Dataset):
+    def prepare(self):
+        self.data = [np.array([0,1,2]), np.array([3,4,5]), np.array([6,7,8])]
+        self.label = [np.array([3,4]), np.array([6,7]), np.array([9, 10])]
