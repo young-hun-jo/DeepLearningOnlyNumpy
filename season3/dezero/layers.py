@@ -152,3 +152,50 @@ class RNN(Layer):
             h_new = F.tanh(self.x2h(x) + self.h2h(self.h))
         self.h = h_new
         return h_new
+
+
+class LSTM(Layer):
+    def __init__(self, hidden_size, in_size=None):
+        super(LSTM, self).__init__()
+
+        H, I = hidden_size, in_size
+        # Forget gate
+        self.x2f = Linear(H, in_size=I)
+        self.h2f = Linear(H, in_size=H, nobias=True)
+        # Output gate
+        self.x2o = Linear(H, in_size=I)
+        self.h2o = Linear(H, in_size=H, nobias=True)
+        # Input gate
+        self.x2i = Linear(H, in_size=I)
+        self.h2i = Linear(H, in_size=H, nobias=True)
+        # Main gate
+        self.x2g = Linear(H, in_size=I)
+        self.h2g = Linear(H, in_size=H, nobias=True)
+
+        self.reset_state()
+
+    def reset_state(self):
+        self.c = None
+        self.h = None
+
+    def forward(self, x):
+        if self.h is None:
+            f = F.sigmoid(self.x2f(x))
+            o = F.sigmoid(self.x2o(x))
+            i = F.sigmoid(self.x2i(x))
+            g = F.tanh(self.x2g(x))
+        else:
+            f = F.sigmoid(self.x2f(x) + self.h2f(self.h))
+            o = F.sigmoid(self.x2o(x) + self.h2o(self.h))
+            i = F.sigmoid(self.x2i(x) + self.h2i(self.h))
+            g = F.tanh(self.x2g(x) + self.h2g(self.h))
+        # 기억 셀
+        if self.c is None:
+            c_new = g * i
+        else:
+            c_new = (g * i) + (self.c * f)
+        # 은닉 상태
+        h_new = F.tanh(c_new) * o
+        self.c, self.h = c_new, h_new
+
+        return h_new
