@@ -4,34 +4,43 @@
 #     sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 
 import numpy as np
-import dezero
+import dezero.functions as F
+from dezero.datasets import SinCurve
+from dezero.dataloaders import SeqDataLoader
+from dezero.models import BetterRNN
+from dezero.optimizers import Adam
 
-from PIL import Image
-from dezero.models import VGG16
-from dezero.datasets import ImageNet
+max_epoch = 100
+batch_size = 30
+hidden_size = 100
+bptt_length = 30
 
-# load input image
-url = 'https://github.com/WegraLee/deep-learning-from-scratch-3/blob/images/zebra.jpg?raw=true'
-img_path = dezero.utils.get_file(url)
-img = Image.open(img_path)
+train_set = SinCurve(train=True)
+train_loader = SeqDataLoader(train_set, batch_size)
+seqlen = len(train_set)
 
-x = VGG16.preprocess(img)
-x = x[np.newaxis]
+model = BetterRNN(hidden_size, out_size=1)
+optimizer = Adam().setup(model)
 
-# model
-model= VGG16(pretrained=True)
+for epoch in range(max_epoch):
+    model.reset_state()   # reset state per each epoch
+    loss, bptt_cnt = 0, 0
 
-with dezero.test_mode():
-    y = model(x)
-pred_id = np.argmax(y.data)
+    for x, t in train_loader:
+        # predict and get loss
+        y = model(x)
+        loss += F.mean_squared_error(y, t)
+        bptt_cnt += 1
 
-model.plot(x, to_file='vgg.pdf')
-labels = ImageNet.labels()
-print('## Prediction result:', labels[pred_id])
-
-
-
-
-
-
-
+        # Truncated BPTT
+        if bptt_cnt % bptt_length == 0 or bptt_cnt == seqlen:
+            # 1. 현재 상태 기울기 초기화
+            model.clear_grads()
+            # 2. 역전파 수행
+            loss.backward(use_heap=True)
+            # 3. 다음 BPTT 대비 위해 앞단 Variable의 창조자 삭제
+            loss.unchain_backward()
+            # 4. 기울기 갱신
+            optimizer.update()
+    avg_loss = float(loss.data) / bptt_cnt
+    print('Epoch:', epoch, '-> Loss:', avg_loss)
