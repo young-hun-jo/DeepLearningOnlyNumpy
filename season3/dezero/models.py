@@ -114,3 +114,18 @@ class SimpleRNN(Model):
         y = self.fc(h)
         return y
 
+
+class BetterRNN(Model):
+    def __init__(self, hidden_size, out_size):
+        super(BetterRNN, self).__init__()
+        self.lstm = L.LSTM(hidden_size)
+        self.fc = L.Linear(out_size)
+
+    def reset_state(self):
+        self.lstm.reset_state()
+
+    def forward(self, x):
+        x = self.lstm(x)
+        y = self.fc(x)
+        return y
+
